@@ -43,11 +43,9 @@ class PluginLoader():
         """ Import the plugin's module """
         name = name.replace("-", "_")
         ttl = attr.split(".")[-1].title()
-        logger.info("Loading %s from %s plugin...", ttl, name.title())
         attr = "model" if attr == "Trainer" else attr.lower()
         mod = ".".join((attr, name))
         module = import_module(mod)
-        logger.info(str(module) + str(ttl))
         return getattr(module, ttl)
 
     @staticmethod
