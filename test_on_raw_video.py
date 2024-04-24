@@ -48,16 +48,11 @@ def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pt
 
     max_frame = 300
     
-    print("detecting")
     detect_res, all_lm68, frames = detect_all(
         video_path, return_frames=True, max_size=max_frame
     )
-    print("detect finished")
-
-    print("Number of frames detected: ",len(frames))
 
     shape = frames[0].shape[:2]
-
     all_detect_res = []
 
     assert len(all_lm68) == len(detect_res)
@@ -71,12 +66,8 @@ def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pt
 
     detect_res = all_detect_res
 
-    print("split into super clips")
-
     tracks = multiple_tracking(detect_res)
     tuples = [(0, len(detect_res))] * len(tracks)
-
-    print("full_tracks", len(tracks))
 
     if len(tracks) == 0:
         tuples, tracks = find_longest(detect_res)
@@ -86,7 +77,6 @@ def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pt
     super_clips = []
 
     for track_i, ((start, end), track) in enumerate(zip(tuples, tracks)):
-        print(start, end)
         assert len(detect_res[start:end]) == len(track)
 
         super_clips.append(len(track))
@@ -114,8 +104,6 @@ def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pt
             data_storage[base_key + "idx"] = frame_idx
 
             frame_boxes[frame_idx] = np.rint(box).astype(np.int32)
-
-    print("sampling clips from super clips", super_clips)
 
     clips_for_video = []
     clip_size = cfg.clip_size
@@ -151,7 +139,7 @@ def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pt
     preds = []
     frame_res = {}
 
-    for clip in tqdm(clips_for_video, desc="testing"):
+    for clip in clips_for_video, desc="testing":
         images = [data_storage[f"{i}_{j}_img"] for i, j in clip]
         landmarks = [data_storage[f"{i}_{j}_ldm"] for i, j in clip]
         frame_ids = [data_storage[f"{i}_{j}_idx"] for i, j in clip]
@@ -170,7 +158,7 @@ def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pt
         preds.append(pred)
 
     video_score = np.mean(preds)
-    print(video_score)
+    print(f"{video_path} Score: {video_score}")
 
     return video_score, frames, frame_res
 
