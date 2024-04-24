@@ -175,14 +175,11 @@ def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pt
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("video", type=str, help="input video")
-    parser.add_argument("out_dir", type=str, help="output")
-    parser.add_argument("checkpoint_path", type=str, help="checkpoint file")
+    parser.add_argument("--out_dir", type=str, help="Directory for output", required=False)
+    parser.add_argument("--checkpoint_path", type=str, default="./checkpoints/ftcn_tt.pth", help="Path to the checkpoint file", required=False)
 
     args = parser.parse_args()
-
-    video_path = args.video
-    out_dir = args.out_dir
-
-    video_score, frames, frame_res = predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pth")
+    
+    video_score, frames, frame_res = predict_deepfake_video(args.video, args.checkpoint_path)
     if args.out_dir:
-        create_output_video(video_path, frames, frame_res, out_dir)
+        create_output_video(args.video, frames, frame_res, args.out_dir)
