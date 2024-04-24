@@ -139,7 +139,7 @@ def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pt
     preds = []
     frame_res = {}
 
-    for clip in clips_for_video, desc="testing":
+    for clip in clips_for_video:
         images = [data_storage[f"{i}_{j}_img"] for i, j in clip]
         landmarks = [data_storage[f"{i}_{j}_ldm"] for i, j in clip]
         frame_ids = [data_storage[f"{i}_{j}_idx"] for i, j in clip]
