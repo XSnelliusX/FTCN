@@ -207,7 +207,6 @@ def temporal_only_conv(module, name, removed, stride_removed=0):
                 if stride_removed > keep_stride_count:
                     stride = [1, 1, 1]
                     extra = nn.MaxPool3d((1, 2, 2))
-                else:
             if kernel_size[1] == 1 and extra is None:
                 continue
             padding = list(sub_module.padding)
