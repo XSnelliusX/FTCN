@@ -183,7 +183,7 @@ class TransformerHead(nn.Module):
 parameters = []
 for parameter in signature(nn.Conv3d).parameters:
     if parameter not in ['device', 'dtype']:
-        parameters = [parameter]
+        parameters += [parameter]
 
 spatial_count = my_cfg.model.inco.spatial_count
 keep_stride_count = my_cfg.model.inco.keep_stride_count
