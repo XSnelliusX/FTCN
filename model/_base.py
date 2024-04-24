@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 
 
-
 from utils import logger
 from config import config as cfg
 import os
@@ -43,13 +42,11 @@ class ModelBase(nn.Module):
     def save_models(self, epoch):
         """ Backup and save the models """
         if self.rank ==0:
-            logger.debug("Backing up and saving models")
             if not os.path.exists(self.model_dir):
                 os.mkdir(self.model_dir)
             torch.save(self.network.state_dict(), self.get_checkpoint_path(epoch))
             if os.path.exists(self.get_checkpoint_path(epoch - self.max_to_keep)):
                 os.remove(self.get_checkpoint_path(epoch - self.max_to_keep))
-            logger.info("{} models saved".format(self.name))
 
     def load(self, fullpath=None, epoch=-1,pretrained=None):
         """ Force Loading a model, or load the latest model"""
@@ -59,14 +56,11 @@ class ModelBase(nn.Module):
             loaded_epoch = epoch
         if fullpath is None:
             if pretrained is None:
-                logger.info("No existing {} model found".format(self.name))
                 return False, -1
             else:
-                logger.info("pretrained {} model found".format(self.name))
                 fullpath=pretrained
                 loaded_epoch=-1
 
-        logger.debug("Loading model: '%s'", fullpath)
         try:
             saved_state_dict = torch.load(fullpath, map_location='cpu')
 
@@ -93,16 +87,7 @@ class ModelBase(nn.Module):
                 param_dict[k] = v
                 loaded_key.add(k)
             unfind_key = all_key - (loaded_key | unmatch_key)
-            if redundant_key:
-                logger.warn("{} are in checkpoint, but not found in model {}".format(redundant_key, self.name))
-            if unfind_key:
-                logger.warn(
-                    "{} are in model, but not found in chekppint loaded for {}".format(unfind_key, self.name))
-            if unmatch_key:
-                logger.warn(
-                    "{} have unmatching shape between checkpoint&model for {}".format(unmatch_key, self.name))
             self.network.load_state_dict(param_dict)
-            logger.info(" consume training from {}".format(fullpath))
         except ValueError as err:
             logger.warning("Failed loading existing training data for {}. Generating new models".format(self.name))
             logger.debug("Exception: %s", str(err))
@@ -207,7 +192,6 @@ class ModelBase(nn.Module):
         """ Set the model name based on the subclass """
         basename = os.path.basename(sys.modules[self.__module__].__file__)
         retval = os.path.splitext(basename)[0].lower()
-        logger.debug("model name: '%s'", retval)
         return retval
 
 
@@ -254,7 +238,6 @@ class ModelBase(nn.Module):
         """
         if '_config' not in self.__dict__:
             model_type, model_name = self.__module__.split(".")[-2:]
-            logger.debug("Loading config for: %s", model_name)
             model_config = getattr(config,model_type,AttrDict()).to_dict()
             default_config = model_config.get('default', {})
             specific_config = model_config.get(model_name, {})
