@@ -48,7 +48,7 @@ def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pt
 
     print("detecting")
     detect_res, all_lm68, frames = detect_all(
-        input_file, return_frames=True, max_size=max_frame
+        video_path, return_frames=True, max_size=max_frame
     )
     torch.save((detect_res, all_lm68), cache_file)
     print("detect finished, number of frames detected: ",len(frames))
