@@ -14,13 +14,27 @@ from tqdm import tqdm
 mean = torch.tensor([0.485 * 255, 0.456 * 255, 0.406 * 255,]).cuda().view(1, 3, 1, 1, 1)
 std = torch.tensor([0.229 * 255, 0.224 * 255, 0.225 * 255,]).cuda().view(1, 3, 1, 1, 1)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("video", type=str, help="input video")
-    parser.add_argument("out_dir", type=str, help="output")
+def create_output_video(video_path, frames, frame_res, output_dir="./output"):
+    os.makedirs(output_dir, exist_ok=True)
+    basename = os.path.splitext(os.path.basename(video_path))[0] + ".avi"
+    out_file = os.path.join(output_dir, basename)
 
-    args = parser.parse_args()
+    boxes = []
+    scores = []
 
+    for frame_idx in range(len(frames)):
+        if frame_idx in frame_res:
+            pred_prob = np.mean(frame_res[frame_idx])
+            rect = frame_boxes[frame_idx]
+        else:
+            pred_prob = None
+            rect = None
+        scores.append(pred_prob)
+        boxes.append(rect)
+
+    SupplyWriter(args.video, out_file, 0.002584857167676091).run(frames, scores, boxes)
+
+def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pth"):
     cfg.init_with_yaml()
     cfg.update_with_yaml("ftcn_tt.yaml")
     cfg.freeze()
@@ -28,33 +42,17 @@ if __name__ == "__main__":
     classifier = PluginLoader.get_classifier(cfg.classifier_type)()
     classifier.cuda()
     classifier.eval()
-    classifier.load("checkpoints/ftcn_tt.pth")
+    classifier.load(checkpoint_path)
 
     crop_align_func = FasterCropAlignXRay(cfg.imsize)
 
-    input_file = args.video
-    os.makedirs(args.out_dir, exist_ok=True)
-    basename = os.path.splitext(os.path.basename(input_file))[0] + ".avi"
-    out_file = os.path.join(args.out_dir, basename)
+    print("detecting")
+    detect_res, all_lm68, frames = detect_all(
+        input_file, return_frames=True, max_size=max_frame
+    )
+    torch.save((detect_res, all_lm68), cache_file)
+    print("detect finished, number of frames detected: ",len(frames))
 
-    max_frame = 768
-    cache_file = f"{input_file}_{str(max_frame)}.pth"
-
-    if os.path.exists(cache_file):
-        detect_res, all_lm68 = torch.load(cache_file)
-        frames = grab_all_frames(input_file, max_size=max_frame, cvt=True)
-        print("detection result loaded from cache")
-    else:
-        print("detecting")
-        detect_res, all_lm68, frames = detect_all(
-            input_file, return_frames=True, max_size=max_frame
-        )
-        torch.save((detect_res, all_lm68), cache_file)
-        print("detect finished")
-
-    print("number of frames",len(frames))
-
-    
     shape = frames[0].shape[:2]
 
     all_detect_res = []
@@ -79,7 +77,7 @@ if __name__ == "__main__":
 
     if len(tracks) == 0:
         tuples, tracks = find_longest(detect_res)
-
+    
     data_storage = {}
     frame_boxes = {}
     super_clips = []
@@ -146,7 +144,7 @@ if __name__ == "__main__":
         for indices in frame_range:
             clip = [(super_clip_idx, t) for t in indices]
             clips_for_video.append(clip)
-    
+
     preds = []
     frame_res = {}
 
@@ -168,19 +166,23 @@ if __name__ == "__main__":
             frame_res[f_id].append(pred)
         preds.append(pred)
 
-    print(np.mean(preds))
-    
-    boxes = []
-    scores = []
+    video_score = np.mean(preds)
+    print(video_score)
 
-    for frame_idx in range(len(frames)):
-        if frame_idx in frame_res:
-            pred_prob = np.mean(frame_res[frame_idx])
-            rect = frame_boxes[frame_idx]
-        else:
-            pred_prob = None
-            rect = None
-        scores.append(pred_prob)
-        boxes.append(rect)
+    return video_score, frames, frame_res
 
-    SupplyWriter(args.video, out_file, 0.002584857167676091).run(frames, scores, boxes)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("video", type=str, help="input video")
+    parser.add_argument("out_dir", type=str, help="output")
+    parser.add_argument("checkpoint_path", type=str, help="checkpoint file")
+
+    args = parser.parse_args()
+
+    video_path = args.video
+    out_dir = args.out_dir
+
+    video_score, frames, frame_res = predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pth")
+    if args.out_dir:
+        create_output_video(video_path, frames, frame_res, out_dir)

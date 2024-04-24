@@ -13,7 +13,7 @@ def sample_chunks(l, n, step=None):
     return [l[i : i + n] for i in range(0, len(l), step) if i + n <= len(l)]
 
 
-def grab_all_frames(path, max_size, cvt=False):
+def grab_all_frames(path, max_size=None, cvt=False):
     capture = cv2.VideoCapture(path)
     ret = True
     frames = []
