@@ -46,9 +46,22 @@ def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pt
 
     crop_align_func = FasterCropAlignXRay(cfg.imsize)
 
-    print("detecting")
-    detect_res, all_lm68, frames = detect_all(video_path, return_frames=True)
-    print("detect finished, number of frames detected: ",len(frames))
+    max_frame = 300
+    cache_file = f"{input_file}_{str(max_frame)}.pth"
+
+    if os.path.exists(cache_file):
+        detect_res, all_lm68 = torch.load(cache_file)
+        frames = grab_all_frames(input_file, max_size=max_frame, cvt=True)
+        print("detection result loaded from cache")
+    else:
+        print("detecting")
+        detect_res, all_lm68, frames = detect_all(
+            input_file, return_frames=True, max_size=max_frame
+        )
+        torch.save((detect_res, all_lm68), cache_file)
+        print("detect finished")
+
+    print("Number of frames detected: ",len(frames))
 
     shape = frames[0].shape[:2]
 
