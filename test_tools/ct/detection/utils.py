@@ -36,7 +36,7 @@ def get_clips_uniform(path, count, clip_size):
     if count > max_clip_available:
         count = max_clip_available
     final_start = max_clip_available - 1
-    start_indices = np.linspace(0, final_start, count, endpoint=True, dtype=np.int)
+    start_indices = np.linspace(0, final_start, count, endpoint=True, dtype=np.int32)
     all_clip_idx = [list(range(start, start + clip_size)) for start in start_indices]
     valid = set(flatten(all_clip_idx))
     max_idx = max(valid)
@@ -81,8 +81,8 @@ def get_valid_faces(detect_results, max_count=10, thres=0.5, at_least=False):
             if face[-1] < thres and not (j == 0 and at_least):
                 continue
             box, lm, score = face
-            box = box.astype(np.float)
-            lm = lm.astype(np.float)
+            box = box.astype(np.float32)
+            lm = lm.astype(np.float32)
             l.append((box, lm, score))
         new_results.append(l)
     return new_results
@@ -110,7 +110,7 @@ def get_bbox(detect_res):
     all_face_bboxs = []
     for faces in tmp_detect_res:
         all_face_bboxs.extend([face[0] for face in faces])
-    all_face_bboxs = np.array(all_face_bboxs).astype(np.int)
+    all_face_bboxs = np.array(all_face_bboxs).astype(np.int32)
     x1 = all_face_bboxs[:, 0].min()
     x2 = all_face_bboxs[:, 2].max()
     y1 = all_face_bboxs[:, 1].min()
@@ -126,10 +126,10 @@ def delta_detect_res(detect_res, x1, y1):
         f = []
         for face in faces:
             box, lm, score = face
-            box = box.astype(np.float)
+            box = box.astype(np.float32)
             box[[0, 2]] -= x1
             box[[1, 3]] -= y1
-            lm = lm.astype(np.float) - diff
+            lm = lm.astype(np.float32) - diff
             f.append((box, lm, score))
         new_detect_res.append(f)
     return new_detect_res

@@ -33,7 +33,7 @@ def get_bbox(mask):
 
 def get_bigger_box(image, box, scale=0.5):
     height, width = image.shape[:2]
-    box = np.rint(box).astype(np.int)
+    box = np.rint(box).astype(np.int32)
     new_box = box.reshape(2, 2)
     size = new_box[1] - new_box[0]
     diff = scale * size
@@ -41,7 +41,7 @@ def get_bigger_box(image, box, scale=0.5):
     new_box = new_box + diff
     new_box[:, 0] = np.clip(new_box[:, 0], 0, width - 1)
     new_box[:, 1] = np.clip(new_box[:, 1], 0, height - 1)
-    new_box = np.rint(new_box).astype(np.int)
+    new_box = np.rint(new_box).astype(np.int32)
     return new_box.reshape(-1)
 
 
@@ -59,7 +59,7 @@ def process_bigger_clips(clips, dete_res, clip_size, step, scale=0.5):
                 x1, y1, x2, y2 = big_box
                 top_left = big_box[:2][None, :]
                 new_ldm5 = ldm - top_left
-                box = np.rint(box).astype(np.int)
+                box = np.rint(box).astype(np.int32)
                 new_box = (box.reshape(2, 2) - top_left).reshape(-1)
                 feed = LandmarkPredictor.prepare_feed(frame, box)
                 ldm68 = predictor(feed) - top_left

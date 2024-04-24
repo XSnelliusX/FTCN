@@ -112,7 +112,7 @@ if __name__ == "__main__":
             data_storage[base_key + "ldm"] = info
             data_storage[base_key + "idx"] = frame_idx
 
-            frame_boxes[frame_idx] = np.rint(box).astype(np.int)
+            frame_boxes[frame_idx] = np.rint(box).astype(np.int32)
 
     print("sampling clips from super clips", super_clips)
 
