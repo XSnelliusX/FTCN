@@ -1,4 +1,3 @@
-from utils import logger
 import gc
 config_text = """
 TRAIN:
@@ -163,7 +162,6 @@ class TransformerHead(nn.Module):
         for key in default_params:
             if key in params:
                 default_params[key] = params[key]
-        logger.info(default_params)
         self.time_T = TimeTransformer(
             num_patches=self.num_patches, num_classes=1, **default_params
         )
@@ -187,8 +185,6 @@ for parameter in signature(nn.Conv3d).parameters:
 
 spatial_count = my_cfg.model.inco.spatial_count
 keep_stride_count = my_cfg.model.inco.keep_stride_count
-logger.info(f"spatial_count={spatial_count} keep_stride_count={keep_stride_count}")
-
 
 def temporal_only_conv(module, name, removed, stride_removed=0):
     """
@@ -212,8 +208,6 @@ def temporal_only_conv(module, name, removed, stride_removed=0):
                     stride = [1, 1, 1]
                     extra = nn.MaxPool3d((1, 2, 2))
                 else:
-                    logger.info(f"stride {stride_removed} keeped")
-
             if kernel_size[1] == 1 and extra is None:
                 continue
             padding = list(sub_module.padding)
@@ -232,9 +226,6 @@ def temporal_only_conv(module, name, removed, stride_removed=0):
 
             removed += 1
             if removed > spatial_count:
-                logger.info(
-                    f"{removed} replace {name}.{attr_str}: {str(sub_module)} with {str(new_module)}"
-                )
                 setattr(module, attr_str, new_module)
                 if extra is not None:
                     if attr_str == "conv":
@@ -245,14 +236,10 @@ def temporal_only_conv(module, name, removed, stride_removed=0):
                     assert isinstance(bn_module, nn.BatchNorm3d)
                     new_bn_module = nn.Sequential(bn_module, extra)
                     setattr(module, bn_str, new_bn_module)
-                    logger.info(
-                        f"stride {stride_removed} replace {name}.{bn_str}: {str(new_bn_module)}"
-                    )
             else:
                 print("keep spatial")
         elif type(sub_module) == nn.Dropout:
             new_module = nn.Dropout(p=0.5)
-            # logger.info(f"replace {name}.{attr_str}: {str(sub_module)} with {str(new_module)}")
             setattr(module, attr_str, new_module)
         if my_cfg.model.inco.no_time_pool:
             if type(sub_module) == nn.MaxPool3d:
@@ -284,7 +271,6 @@ class I3D8x8(nn.Module):
         cfg.TRAIN.BATCH_SIZE = 1
         cfg.DATA.NUM_FRAMES = my_cfg.clip_size
         SOLVER = my_cfg.model.inco.SOLVER
-        logger.info(str(SOLVER))
         if SOLVER is not None:
             for key, val in SOLVER.to_dict().items():
                 old_val = getattr(cfg.SOLVER, key)
