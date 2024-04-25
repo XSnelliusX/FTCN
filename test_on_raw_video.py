@@ -33,6 +33,7 @@ def create_output_video(video_path, frames, frame_res, frame_boxes, output_dir="
         boxes.append(rect)
 
     SupplyWriter(args.video, out_file, 0.002584857167676091).run(frames, scores, boxes)
+    print(f"Output File {out_file} saved")
 
 def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pth"):
     cfg.init_with_yaml()
