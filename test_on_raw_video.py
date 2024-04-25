@@ -14,7 +14,7 @@ from tqdm import tqdm
 mean = torch.tensor([0.485 * 255, 0.456 * 255, 0.406 * 255,]).cuda().view(1, 3, 1, 1, 1)
 std = torch.tensor([0.229 * 255, 0.224 * 255, 0.225 * 255,]).cuda().view(1, 3, 1, 1, 1)
 
-def create_output_video(video_path, frames, frame_res, output_dir="./output"):
+def create_output_video(video_path, frames, frame_res, frame_boxes, output_dir="./output"):
     os.makedirs(output_dir, exist_ok=True)
     basename = os.path.splitext(os.path.basename(video_path))[0] + ".avi"
     out_file = os.path.join(output_dir, basename)
@@ -160,7 +160,7 @@ def predict_deepfake_video(video_path, checkpoint_path="./checkpoints/ftcn_tt.pt
     video_score = np.mean(preds)
     print(f"{video_path} Score: {video_score}")
 
-    return video_score, frames, frame_res
+    return video_score, frames, frame_res, frame_boxes
 
 
 if __name__ == "__main__":
@@ -171,6 +171,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    video_score, frames, frame_res = predict_deepfake_video(args.video, args.checkpoint_path)
+    video_score, frames, frame_res, frame_boxes = predict_deepfake_video(args.video, args.checkpoint_path)
     if args.out_dir:
-        create_output_video(args.video, frames, frame_res, args.out_dir)
+        create_output_video(args.video, frames, frame_res, frame_boxes, args.out_dir)
